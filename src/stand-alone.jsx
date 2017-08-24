@@ -4,17 +4,23 @@
 
 import React from "react";
 import {render} from "react-dom";
+import {Provider} from "react-redux";
 
 import createStore from "./create-store";
 import connectActions from "./connect-actions";
 
-export default props =>
-    (container, store = null, initialState = {}) => {
+export default props => {
+    //Create module namespace
+    window[props.namespace] = window[props.namespace] || {};
+    window[props.namespace][props.name] = window[props.namespace][props.name] || {};
+
+    //Create initializer
+    window[props.namespace][props.name].init = (container, store = null, initialState = {}) => {
         //Get or create store
-        const store = store || createStore(props.reducer || {}, initialState);
+        store = store || createStore(props.reducer || {}, initialState);
 
         //Render message container
-        const Content = props.content || <div></div>;
+        const Content = props.content || (props => <div></div>);
         render(
             <Provider store={store}>
                 <Content />
@@ -23,6 +29,10 @@ export default props =>
         );
 
         //Create Javascript hooks
-        window[namespace] = window[namespace] || {};
-        window[namespace][props.name] = connectActions(store, props.actions || {});
-    };
+        window[props.namespace][props.name] = Object.assign(
+            {},
+            window[props.namespace][props.name],
+            connectActions(store, props.actions || {})
+        );
+    }
+};
